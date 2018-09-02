@@ -7,14 +7,14 @@ public class DPLL {
      * @param s sentence to analyse.
      * @return true if the sentence is satisfiable.
      */
-    public boolean dpllSatisfiable(Sentence s) {
+    public static boolean dpllSatisfiable(CNFSentence s) {
         if (s.isEmpty()) {
             return true;
         }
         if (s.hasEmptyClause()) {
             return false;
         }
-        Literal u = s.getUnitClause();
+        Variable u = s.getUnitClause();
         if (u != null) {
             return dpllSatisfiable(s.assign(u));
         }
@@ -22,26 +22,19 @@ public class DPLL {
         if (u != null) {
             return dpllSatisfiable(s.assign(u));
         }
-        Literal v = s.pickVariable();
+        Variable v = s.pickVariable();
         if (dpllSatisfiable(s.assign(v))) {
             return true;
         } else {
-            return dpllSatisfiable(s.assign(Logic.not(v)));
+            v.negate();
+            return dpllSatisfiable(s.assign(v));
         }
     }
 
-    /**
-     * Choose a literal in a sentence based on number of occurrences.
-     *
-     * @param s the sentence to analyse.
-     * @return literal in the sentence with the highest occurence.
-     */
-    public Literal pickVariable(Sentence s) {
-        return null;
-    }
-
     public static void main(String[] args) {
-
+        String repr = args[0];
+        CNFSentence s = new CNFSentence(repr);
+        System.out.println(dpllSatisfiable(s));
     }
 
 }

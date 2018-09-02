@@ -1,44 +1,66 @@
 import java.util.*;
 
+/**
+ * Representation of a logical sentence in conjunctive normal form (CNF).
+ */
 public class CNFSentence extends Sentence {
 
-    private Set<Sentence> clauses;
-    private Set<Literal> literals;
+    private Set<Disjunction> clauses;
+    private Set<Variable> variables;
 
+    /**
+     * Constructor.
+     *
+     */
     public CNFSentence() {
         clauses = new HashSet<>();
-        literals = new HashSet<>();
+        variables = new HashSet<>();
     }
 
-    public void addClause(Sentence clause) {clauses.add(clause);}
+    /**
+     * Copy constructor.
+     *
+     * @param s the sentence to copy.
+     */
+    private CNFSentence(CNFSentence s) {
+        clauses = new HashSet<>();
+        variables = new HashSet<>();
+        for (Disjunction d: s.clauses) {
+            clauses.add(new Disjunction(d));
+        }
+        for (Variable v : s.variables) {
+            variables.add(new Variable(v));
+        }
+    }
 
-    public void removeClause(Sentence clause) {clauses.remove(clause);}
-
-    protected Set<Sentence> getClauses() {return clauses;}
-
-    protected Set<Literal> getLiterals() {return literals;}
-
-    protected int numberOfLiterals() {return literals.size();}
-
-    public Literal pickVariable() {
-        Map<Literal, Integer> counts = new HashMap<>();
-        Literal choice = null;
-        int maxCount = 0;
-        for (Sentence clause: clauses) {
-            for (Literal u: clause.getLiterals()) {
-                Integer count = counts.get(u);
-                if (count == null) {
-                    counts.put(u, 0);
-                    continue;
-                }
-                counts.put(u, ++count);
-                if (count > maxCount) {
-                    maxCount = count;
-                    choice = u;
-                }
+    /**
+     * Construct a sentence from a string representation.
+     *
+     * Expects a certain format, e.g.
+     * (~P v Q) & (R v S)
+     *
+     * @param repr the string representation of the sentence.
+     * @throws IllegalArgumentException if the format is incorrect.
+     */
+    public CNFSentence(String repr)
+            throws IllegalArgumentException {
+        clauses = new HashSet<>();
+        variables = new HashSet<>();
+        if (repr.length() == 0) {
+            return;
+        }
+        String[] splitAND = repr.split(AND);
+        for (String c : splitAND) {
+            c = c.trim();
+            c = c.replaceAll("\\(", "");
+            c = c.replaceAll("\\)", "");
+            Disjunction d = new Disjunction(c);
+            clauses.add(d);
+            for (Variable v: d.variables) {
+                // Keep unsigned
+                variables.add(new Variable(v.getName(), false));
             }
         }
-        return choice;
     }
 
     /**
@@ -47,19 +69,19 @@ public class CNFSentence extends Sentence {
      * @return true if the sentence is empty.
      */
     boolean isEmpty() {
-        return false;
+        return clauses.size() == 0;
     }
 
     /**
      * Check if the sentence has an empty clause, a clause where all
      * variables have been assigned in a way that makes the
-     * corresponding literals false.
+     * corresponding variables false.
      *
      * @return true if the sentence has an empty clause.
      */
     boolean hasEmptyClause() {
-        for (Sentence clause: clauses) {
-            if (clause.hasEmptyClause()) {
+        for (Disjunction d: clauses) {
+            if (d.variables.size() == 0) {
                 return true;
             }
         }
@@ -72,10 +94,11 @@ public class CNFSentence extends Sentence {
      *
      * @return the first (if any) unit clause in the sentence, else null.
      */
-    Literal getUnitClause() {
-        for (Sentence clause: clauses) {
-            if (clause.getUnitClause() != null) {
-                return (Literal) clause;
+    Variable getUnitClause() {
+        for (Disjunction d: clauses) {
+            Variable unit = d.getUnitClause();
+            if (unit != null) {
+                return unit;
             }
         }
         return null;
@@ -87,13 +110,13 @@ public class CNFSentence extends Sentence {
      *
      * @return the first (if any) pure literal in the sentence, else null.
      */
-    Literal getPureLiteral() {
+    Variable getPureLiteral() {
         boolean negated;
         boolean nextLiteral = false;
-        for (Literal u: literals) {
+        for (Variable u: variables) {
             negated = u.isNegated();
-            for (Sentence clause: clauses) {
-                for (Literal v: clause.getLiterals()) {
+            for (Disjunction d: clauses) {
+                for (Variable v: d.variables) {
                     if (u.getName().equals(v.getName())
                             && v.isNegated() != negated) {
                         nextLiteral = true;
@@ -113,51 +136,111 @@ public class CNFSentence extends Sentence {
     }
 
     /**
+     * Remove any variables that no longer appear in the sentence.
+     *
+     * @param s the sentence to update
+     */
+    private static void updateVariables(CNFSentence s) {
+        HashSet<Variable> toRemove = new HashSet<>();
+        boolean found;
+        for (Variable v : s.variables) {
+            found = false;
+            for (Disjunction d : s.clauses) {
+                if (d.variables.contains(v)) {
+                    found = true;
+                }
+            }
+            if (!found) {
+                toRemove.add(v);
+            }
+        }
+        s.variables.removeAll(toRemove);
+    }
+
+    /**
      * Return a simplified sentence after removing the given literal.
      * Removing the literal is equivalent to assigning it 'true'.
      *
      * @param u literal to remove from the sentence.
      * @return new sentence with literal removed.
      */
-    Sentence assign(Literal u) {
+    CNFSentence assign(Variable u) {
         // We implicitly assign true to u
         // Copy this sentence
-        Sentence s = new CNFSentence(this);
-        for (Sentence clause: clauses) {
+        CNFSentence s = new CNFSentence(this);
+        for (Disjunction d: clauses) {
             // Check for unit clause
-            Literal unit = clause.getUnitClause();
+            Variable unit = d.getUnitClause();
             if (unit != null) {
                 if (u.getName().equals(unit.getName())) {
                     // The unit clause is u, so assign it
                     if (u.isNegated() == unit.isNegated()) {
                         // ANDing with true is redundant
-                        removeClause(clause);
+                        s.clauses.remove(d);
                     } else {
                         // ANDing with false is false
-                        return new EmptyClause();
+                        // Sentence reduced to an empty clause; nothing to do
+                        s.clauses = new HashSet<>();
+                        s.clauses.add(new Disjunction());
+                        s.variables = new HashSet<>();
+                        break;
                     }
-                } else {
-                    // Some other unit clause - move on
-                    continue;
                 }
             } else {
                 // Not a unit clause, meaning it is a disjunction
                 // Check if u is in the clause
-                for (Literal v: clause.getLiterals()) {
+                for (Variable v: d.variables) {
                     if (u.getName().equals(v.getName())) {
                         // u is in this clause, so assign it
                         if (u.isNegated() == v.isNegated()) {
+                            // Same sign --> true
                             // ORing with true is true
                             // Then ANDing with true is redundant
-                            removeClause(clause);
+                            s.clauses.remove(d);
                         } else {
+                            // Different sign --> false
                             // ORing with false is redundant
-                            clause.removeLiteral(u);
+                            d.variables.remove(u);
                         }
                     }
                 }
             }
-            return s;
+            updateVariables(s);
+        }
+        return s;
+    }
+
+    /**
+     * Pick a variable to for assignment based on occurrence.
+     *
+     * @return variable with the highest occurrence in the sentence.
+     */
+    public Variable pickVariable() {
+        Map<Variable, Integer> counts = new HashMap<>();
+        Variable choice = null;
+        int maxCount = 0;
+        for (Disjunction d: clauses) {
+            for (Variable u: d.variables) {
+                Integer count = counts.get(u);
+                if (count == null) {
+                    counts.put(u, 0);
+                    continue;
+                }
+                counts.put(u, ++count);
+                if (count > maxCount) {
+                    maxCount = count;
+                    choice = u;
+                }
+            }
+        }
+        return choice;
+    }
+
+    public static void main(String[] args) {
+        String[] tests = {"", "A", "~A & B", "(A v B) & C",
+                "(A v B) & (C v D) & (E v ~F v G)"};
+        for (String test : tests) {
+            Sentence s = new CNFSentence(test);
         }
     }
 
