@@ -79,4 +79,24 @@ public class Disjunction extends Sentence {
     public int hashCode() {
         return Objects.hash(variables);
     }
+
+    @Override
+    public String toString() {
+        String orSymbol = OR.replace("\\", "");
+        String orAppend = " " + orSymbol + " ";
+        StringBuilder sb = new StringBuilder();
+        if (variables.size() > 1) {
+            sb.append("(");
+        }
+        for (Variable v: variables) {
+            sb.append(v.toString());
+            sb.append(orAppend);
+        }
+        // Delete last OR
+        sb.delete(sb.length() - 3, sb.length());
+        if (variables.size() > 1) {
+            sb.append(")");
+        }
+        return sb.toString();
+    }
 }

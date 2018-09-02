@@ -205,8 +205,8 @@ public class CNFSentence extends Sentence {
                     }
                 }
             }
-            updateVariables(s);
         }
+        updateVariables(s);
         return s;
     }
 
@@ -236,11 +236,28 @@ public class CNFSentence extends Sentence {
         return choice;
     }
 
+    @Override
+    public String toString() {
+        String andSymbol = AND.replace("\\", "");
+        String andAppend = " " + andSymbol + " ";
+        StringBuilder sb = new StringBuilder();
+        for (Disjunction d: clauses) {
+            sb.append(d.toString());
+            sb.append(andAppend);
+        }
+        // Delete last AND
+        if (sb.length() > 4) {
+            sb.delete(sb.length() - 3, sb.length());
+        }
+        return sb.toString();
+    }
+
     public static void main(String[] args) {
         String[] tests = {"", "A", "~A & B", "(A v B) & C",
                 "(A v B) & (C v D) & (E v ~F v G)"};
         for (String test : tests) {
             Sentence s = new CNFSentence(test);
+            System.out.println(s.toString());
         }
     }
 

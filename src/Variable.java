@@ -46,4 +46,13 @@ public class Variable extends Sentence {
     public int hashCode() {
         return Objects.hash(name, negated);
     }
+
+    @Override
+    public String toString() {
+        if (negated) {
+            return "~" + name;
+        } else {
+            return name;
+        }
+    }
 }
