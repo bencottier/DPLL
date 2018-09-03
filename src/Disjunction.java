@@ -10,9 +10,11 @@ import java.util.Set;
 public class Disjunction extends Sentence {
 
     /** The set of variables contained in the disjunction. */
-    protected Set<Variable> variables;
+    protected Set<Variable> clauses;
+    protected Set<String> variables;
 
     public Disjunction() {
+        clauses = new HashSet<>();
         variables = new HashSet<>();
     }
 
@@ -20,9 +22,11 @@ public class Disjunction extends Sentence {
      * Copy constructor.
      */
     public Disjunction(Disjunction d) {
+        clauses = new HashSet<>();
         variables = new HashSet<>();
-        for (Variable v: d.variables) {
-            variables.add(new Variable(v));
+        for (Variable v: d.clauses) {
+            clauses.add(new Variable(v));
+            variables.add(v.getName());
         }
     }
 
@@ -37,6 +41,7 @@ public class Disjunction extends Sentence {
      */
     public Disjunction(String repr)
             throws IllegalArgumentException {
+        clauses = new HashSet<>();
         variables = new HashSet<>();
         if (repr.length() == 0) {
             return;
@@ -50,7 +55,8 @@ public class Disjunction extends Sentence {
                 negated = true;
             }
             Variable var = new Variable(v, negated);
-            variables.add(var);
+            clauses.add(var);
+            variables.add(var.getName());
         }
     }
 
@@ -60,8 +66,8 @@ public class Disjunction extends Sentence {
      * @return the variable if this is a unit clause, else null.
      */
     protected Variable getUnitClause() {
-        if (variables.size() == 1) {
-            Iterator<Variable> it = variables.iterator();
+        if (clauses.size() == 1) {
+            Iterator<Variable> it = clauses.iterator();
             return it.next();
         }
         return null;
@@ -72,12 +78,18 @@ public class Disjunction extends Sentence {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Disjunction that = (Disjunction) o;
-        return Objects.equals(variables, that.variables);
+        // Check each variable
+        for (Variable clause : clauses) {
+            if (!that.clauses.contains(clause)) {
+                return false;
+            }
+        }
+        return clauses.size() == that.clauses.size();
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(variables);
+        return Objects.hash(clauses, variables);
     }
 
     @Override
@@ -85,16 +97,16 @@ public class Disjunction extends Sentence {
         String orSymbol = OR.replace("\\", "");
         String orAppend = " " + orSymbol + " ";
         StringBuilder sb = new StringBuilder();
-        if (variables.size() > 1) {
+        if (clauses.size() > 1) {
             sb.append("(");
         }
-        for (Variable v: variables) {
+        for (Variable v: clauses) {
             sb.append(v.toString());
             sb.append(orAppend);
         }
         // Delete last OR
         sb.delete(sb.length() - 3, sb.length());
-        if (variables.size() > 1) {
+        if (clauses.size() > 1) {
             sb.append(")");
         }
         return sb.toString();
