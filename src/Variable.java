@@ -25,10 +25,6 @@ public class Variable extends Sentence {
         return negated;
     }
 
-    public void negate() {
-        negated = !negated;
-    }
-
     public String getSymbol() {
         return symbol;
     }

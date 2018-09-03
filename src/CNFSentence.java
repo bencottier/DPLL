@@ -7,7 +7,6 @@ public class CNFSentence extends Sentence {
 
     private Set<Disjunction> clauses;
     private Set<Variable> variables;
-    private Set<String> symbols;
 
     /**
      * Constructor.
@@ -16,7 +15,6 @@ public class CNFSentence extends Sentence {
     public CNFSentence() {
         clauses = new HashSet<>();
         variables = new HashSet<>();
-        symbols = new HashSet<>();
     }
 
     /**
@@ -33,7 +31,6 @@ public class CNFSentence extends Sentence {
         for (Variable v : s.variables) {
             variables.add(new Variable(v));
         }
-        symbols.addAll(s.symbols);
     }
 
     /**
@@ -49,7 +46,6 @@ public class CNFSentence extends Sentence {
             throws IllegalArgumentException {
         clauses = new HashSet<>();
         variables = new HashSet<>();
-        symbols = new HashSet<>();
         if (repr.length() == 0) {
             return;
         }
@@ -61,7 +57,6 @@ public class CNFSentence extends Sentence {
             Disjunction d = new Disjunction(c);
             clauses.add(d);
             variables.addAll(d.variables);
-            symbols.addAll(d.symbols);
         }
     }
 
@@ -171,23 +166,24 @@ public class CNFSentence extends Sentence {
                         s.clauses = new HashSet<>();
                         s.clauses.add(new Disjunction());
                         s.variables = new HashSet<>();
-                        s.symbols = new HashSet<>();
                         break;
                     }
                 }
             } else {
                 // Not a unit clause, meaning it is a disjunction
                 // Check if u is in the clause
+                Variable negU = new Variable(u.getSymbol(), !u.isNegated());
                 if (d.variables.contains(u)) {
                     // u is in the clause with same sign --> true
                     // ORing with true is true
                     // Then ANDing with true is redundant
                     s.clauses.remove(d);
-                } else if (d.variables.contains(
-                        new Variable(u.getSymbol(), !u.isNegated()))) {
+                } else if (d.variables.contains(negU)) {
                     // Different sign --> false
                     // ORing with false is redundant
-                    d.variables.remove(u);
+                    s.clauses.remove(d); // to be replaced
+                    d.variables.remove(negU);
+                    s.clauses.add(d);
                     // Remove symbol if it is no longer in the disjunction
                     if (!d.variables.contains(u)) {
                         d.symbols.remove(u.getSymbol());
@@ -205,17 +201,17 @@ public class CNFSentence extends Sentence {
      * @return variable with the highest occurrence in the sentence.
      */
     public Variable pickVariable() {
-        Map<Variable, Integer> counts = new HashMap<>();
+        Map<String, Integer> counts = new HashMap<>();
         Variable choice = null;
         int maxCount = 0;
         for (Disjunction d: clauses) {
             for (Variable u: d.variables) {
-                Integer count = counts.get(u);
+                Integer count = counts.get(u.getSymbol());
                 if (count == null) {
-                    counts.put(u, 0);
+                    counts.put(u.getSymbol(), 1);
                     continue;
                 }
-                counts.put(u, ++count);
+                counts.put(u.getSymbol(), ++count);
                 if (count > maxCount) {
                     maxCount = count;
                     choice = u;
@@ -235,7 +231,7 @@ public class CNFSentence extends Sentence {
             sb.append(andAppend);
         }
         // Delete last AND
-        if (sb.length() > 4) {
+        if (sb.length() > 3) {
             sb.delete(sb.length() - 3, sb.length());
         }
         return sb.toString();

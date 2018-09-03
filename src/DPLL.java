@@ -26,7 +26,7 @@ public class DPLL {
         if (dpllSatisfiable(s.assign(v))) {
             return true;
         } else {
-            v.negate();
+            v = new Variable(v.getSymbol(), !v.isNegated());
             return dpllSatisfiable(s.assign(v));
         }
     }
