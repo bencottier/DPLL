@@ -7,6 +7,7 @@ public class CNFSentence extends Sentence {
 
     private Set<Disjunction> clauses;
     private Set<Variable> variables;
+    private Set<String> symbols;
 
     /**
      * Constructor.
@@ -15,6 +16,7 @@ public class CNFSentence extends Sentence {
     public CNFSentence() {
         clauses = new HashSet<>();
         variables = new HashSet<>();
+        symbols = new HashSet<>();
     }
 
     /**
@@ -31,6 +33,7 @@ public class CNFSentence extends Sentence {
         for (Variable v : s.variables) {
             variables.add(new Variable(v));
         }
+        symbols.addAll(s.symbols);
     }
 
     /**
@@ -46,6 +49,7 @@ public class CNFSentence extends Sentence {
             throws IllegalArgumentException {
         clauses = new HashSet<>();
         variables = new HashSet<>();
+        symbols = new HashSet<>();
         if (repr.length() == 0) {
             return;
         }
@@ -56,10 +60,8 @@ public class CNFSentence extends Sentence {
             c = c.replaceAll("\\)", "");
             Disjunction d = new Disjunction(c);
             clauses.add(d);
-            for (Variable v: d.variables) {
-                // Keep unsigned
-                variables.add(new Variable(v.getName(), false));
-            }
+            variables.addAll(d.variables);
+            symbols.addAll(d.symbols);
         }
     }
 
@@ -74,8 +76,8 @@ public class CNFSentence extends Sentence {
 
     /**
      * Check if the sentence has an empty clause, a clause where all
-     * variables have been assigned in a way that makes the
-     * corresponding variables false.
+     * symbols have been assigned in a way that makes the
+     * corresponding symbols false.
      *
      * @return true if the sentence has an empty clause.
      */
@@ -111,32 +113,18 @@ public class CNFSentence extends Sentence {
      * @return the first (if any) pure literal in the sentence, else null.
      */
     Variable getPureLiteral() {
-        boolean negated;
-        boolean nextLiteral = false;
         for (Variable u: variables) {
-            negated = u.isNegated();
-            for (Disjunction d: clauses) {
-                for (Variable v: d.variables) {
-                    if (u.getName().equals(v.getName())
-                            && v.isNegated() != negated) {
-                        nextLiteral = true;
-                        break;
-                    }
-                }
-                if (nextLiteral) {
-                    break;
-                }
+            // Check if its negation is also in the sentence
+            if (!variables.contains(
+                    new Variable(u.getSymbol(), !u.isNegated()))) {
+                return u;
             }
-            if (nextLiteral) {
-                break;
-            }
-            return u;
         }
         return null;
     }
 
     /**
-     * Remove any variables that no longer appear in the sentence.
+     * Remove any symbols that no longer appear in the sentence.
      *
      * @param s the sentence to update
      */
@@ -172,7 +160,7 @@ public class CNFSentence extends Sentence {
             // Check for unit clause
             Variable unit = d.getUnitClause();
             if (unit != null) {
-                if (u.getName().equals(unit.getName())) {
+                if (u.getSymbol().equals(unit.getSymbol())) {
                     // The unit clause is u, so assign it
                     if (u.isNegated() == unit.isNegated()) {
                         // ANDing with true is redundant
@@ -183,25 +171,26 @@ public class CNFSentence extends Sentence {
                         s.clauses = new HashSet<>();
                         s.clauses.add(new Disjunction());
                         s.variables = new HashSet<>();
+                        s.symbols = new HashSet<>();
                         break;
                     }
                 }
             } else {
                 // Not a unit clause, meaning it is a disjunction
                 // Check if u is in the clause
-                for (Variable v: d.variables) {
-                    if (u.getName().equals(v.getName())) {
-                        // u is in this clause, so assign it
-                        if (u.isNegated() == v.isNegated()) {
-                            // Same sign --> true
-                            // ORing with true is true
-                            // Then ANDing with true is redundant
-                            s.clauses.remove(d);
-                        } else {
-                            // Different sign --> false
-                            // ORing with false is redundant
-                            d.variables.remove(u);
-                        }
+                if (d.variables.contains(u)) {
+                    // u is in the clause with same sign --> true
+                    // ORing with true is true
+                    // Then ANDing with true is redundant
+                    s.clauses.remove(d);
+                } else if (d.variables.contains(
+                        new Variable(u.getSymbol(), !u.isNegated()))) {
+                    // Different sign --> false
+                    // ORing with false is redundant
+                    d.variables.remove(u);
+                    // Remove symbol if it is no longer in the disjunction
+                    if (!d.variables.contains(u)) {
+                        d.symbols.remove(u.getSymbol());
                     }
                 }
             }

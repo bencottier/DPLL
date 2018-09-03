@@ -5,11 +5,11 @@ import java.util.Objects;
  */
 public class Variable extends Sentence {
 
-    private String name;
+    private String symbol;
     private boolean negated;
 
-    public Variable(String name, boolean negated) {
-        this.name = name;
+    public Variable(String symbol, boolean negated) {
+        this.symbol = symbol;
         this.negated = negated;
     }
 
@@ -17,7 +17,7 @@ public class Variable extends Sentence {
      * Copy constructor.
      */
     public Variable(Variable v) {
-        this.name = v.name;
+        this.symbol = v.symbol;
         this.negated = v.negated;
     }
 
@@ -29,8 +29,8 @@ public class Variable extends Sentence {
         negated = !negated;
     }
 
-    public String getName() {
-        return name;
+    public String getSymbol() {
+        return symbol;
     }
 
     @Override
@@ -39,20 +39,20 @@ public class Variable extends Sentence {
         if (o == null || getClass() != o.getClass()) return false;
         Variable variable = (Variable) o;
         return negated == variable.negated &&
-                Objects.equals(name, variable.name);
+                Objects.equals(symbol, variable.symbol);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, negated);
+        return Objects.hash(symbol, negated);
     }
 
     @Override
     public String toString() {
         if (negated) {
-            return "~" + name;
+            return "~" + symbol;
         } else {
-            return name;
+            return symbol;
         }
     }
 }
