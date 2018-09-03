@@ -1,8 +1,12 @@
+/**
+ * Implementation of the Davis-Putnam-Logeman-Loveland (DPLL) algorithm.
+ *
+ * @author Ben Cottier
+ */
 public class DPLL {
 
     /**
-     * Determine whether the given sentence is satisfiable using the
-     * Davis-Putnam-Logeman-Loveland (DPLL) algorithm.
+     * Determine whether the given sentence is satisfiable using DPLL.
      *
      * @param s sentence to analyse.
      * @return true if the sentence is satisfiable.

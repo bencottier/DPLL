@@ -2,6 +2,8 @@ import java.util.Objects;
 
 /**
  * Representation of an atomic logical formula (one symbol) or its negation.
+ *
+ * @author Ben Cottier
  */
 public class Variable extends Sentence {
 
@@ -46,7 +48,7 @@ public class Variable extends Sentence {
     @Override
     public String toString() {
         if (negated) {
-            return "~" + symbol;
+            return NOT + symbol;
         } else {
             return symbol;
         }

@@ -2,6 +2,8 @@ import java.util.*;
 
 /**
  * Representation of a logical sentence in conjunctive normal form (CNF).
+ *
+ * @author Ben Cottier
  */
 public class CNFSentence extends Sentence {
 

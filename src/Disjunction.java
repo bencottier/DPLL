@@ -6,6 +6,8 @@ import java.util.Set;
 
 /**
  * Representation of a logical disjunction.
+ *
+ * @author Ben Cottier
  */
 public class Disjunction extends Sentence {
 
