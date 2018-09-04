@@ -11,7 +11,7 @@ public class DPLL {
      * @param s sentence to analyse.
      * @return true if the sentence is satisfiable.
      */
-    public static boolean dpllSatisfiable(CNFSentence s) {
+    public static boolean dpllSatisfiable(CNFSentence s, int depth) {
         System.out.println(s);
         if (s.isEmpty()) {
             return true;
@@ -21,30 +21,34 @@ public class DPLL {
         }
         Variable u = s.getUnitClause();
         if (u != null) {
-            return dpllSatisfiable(s.assign(u));
+            System.out.println(depth + ". assign " + u.toString());
+            return dpllSatisfiable(s.assign(u), depth + 1);
         }
         u = s.getPureLiteral();
         if (u != null) {
-            return dpllSatisfiable(s.assign(u));
+            System.out.println(depth + ". assign " + u.toString());
+            return dpllSatisfiable(s.assign(u), depth + 1);
         }
-        Variable v = s.pickVariable();
-        if (dpllSatisfiable(s.assign(v))) {
+        u = s.pickVariable();
+        System.out.println(depth + ". assign " + u.toString());
+        if (dpllSatisfiable(s.assign(u), depth + 1)) {
             return true;
         } else {
-            v = new Variable(v.getSymbol(), !v.isNegated());
-            return dpllSatisfiable(s.assign(v));
+            u = new Variable(u.getSymbol(), !u.isNegated());
+            System.out.println(depth + ". assign " + u.toString());
+            return dpllSatisfiable(s.assign(u), depth + 1);
         }
     }
 
     public static void main(String[] args) {
         String repr = args[0];
         CNFSentence s = new CNFSentence(repr);
-        System.out.println("\nSentence: " + s.toString() + "\n");
+        System.out.println("\nSentence = " + s.toString() + "\n");
         System.out.println("Steps:");
-        if (dpllSatisfiable(s)) {
-            System.out.println("\nSentence is satisfiable");
+        if (dpllSatisfiable(s, 1)) {
+            System.out.println("\nSentence is satisfiable.");
         } else {
-            System.out.println("\nSentence is not satisfiable");
+            System.out.println("\nSentence is not satisfiable.");
         }
     }
 
