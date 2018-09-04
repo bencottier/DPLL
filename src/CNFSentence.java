@@ -95,10 +95,8 @@ public class CNFSentence extends Sentence {
      */
     Variable getUnitClause() {
         for (Disjunction d: clauses) {
-            Variable unit = d.getUnitClause();
-            if (unit != null) {
-                return unit;
-            }
+            Variable u = d.getUnitClause();
+            if (u != null) return u;
         }
         return null;
     }
@@ -184,11 +182,12 @@ public class CNFSentence extends Sentence {
                     // Different sign --> false
                     // ORing with false is redundant
                     s.clauses.remove(d); // to be replaced
-                    d.variables.remove(negU);
-                    s.clauses.add(d);
+                    Disjunction dCopy = new Disjunction(d);
+                    dCopy.variables.remove(negU);
+                    s.clauses.add(dCopy);
                     // Remove symbol if it is no longer in the disjunction
                     if (!d.variables.contains(u)) {
-                        d.symbols.remove(u.getSymbol());
+                        dCopy.symbols.remove(u.getSymbol());
                     }
                 }
             }
@@ -232,9 +231,15 @@ public class CNFSentence extends Sentence {
             sb.append(d.toString());
             sb.append(andAppend);
         }
+        if (sb.toString().length() == 0) {
+            sb.append("*");
+        }
         // Delete last AND
-        if (sb.length() > 3) {
+        if (sb.length() >= 3) {
             sb.delete(sb.length() - 3, sb.length());
+            if (sb.toString().length() == 0) {
+                sb.append("()");
+            }
         }
         return sb.toString();
     }
