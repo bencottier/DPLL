@@ -69,8 +69,7 @@ public class Disjunction extends Sentence {
      */
     protected Variable getUnitClause() {
         if (variables.size() == 1) {
-            Iterator<Variable> it = variables.iterator();
-            return it.next();
+            return variables.iterator().next();
         }
         return null;
     }
@@ -107,7 +106,9 @@ public class Disjunction extends Sentence {
             sb.append(orAppend);
         }
         // Delete last OR
-        sb.delete(sb.length() - 3, sb.length());
+        if (sb.length() > 3) {
+            sb.delete(sb.length() - 3, sb.length());
+        }
         if (variables.size() > 1) {
             sb.append(")");
         }

@@ -12,6 +12,7 @@ public class DPLL {
      * @return true if the sentence is satisfiable.
      */
     public static boolean dpllSatisfiable(CNFSentence s) {
+        System.out.println(s);
         if (s.isEmpty()) {
             return true;
         }
@@ -38,7 +39,13 @@ public class DPLL {
     public static void main(String[] args) {
         String repr = args[0];
         CNFSentence s = new CNFSentence(repr);
-        System.out.println(dpllSatisfiable(s));
+        System.out.println("\nSentence: " + s.toString() + "\n");
+        System.out.println("Steps:");
+        if (dpllSatisfiable(s)) {
+            System.out.println("\nSentence is satisfiable");
+        } else {
+            System.out.println("\nSentence is not satisfiable");
+        }
     }
 
 }
